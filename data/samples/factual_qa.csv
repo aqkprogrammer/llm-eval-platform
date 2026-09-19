@@ -1,0 +1,16 @@
+input,expected_output,tags
+What is the capital of Australia?,Canberra,trivia;geography
+How many planets are in the Solar System?,There are 8 planets in the Solar System.,trivia;astronomy
+Who wrote 'Pride and Prejudice'?,Jane Austen,trivia;literature
+What is the boiling point of water at sea level in Celsius?,100 degrees Celsius,trivia;science
+What is the chemical symbol for gold?,Au,trivia;science
+In what year did the Apollo 11 mission land on the Moon?,1969,trivia;history
+What is the largest ocean on Earth?,The Pacific Ocean,trivia;geography
+How many bones are in the adult human body?,206,trivia;biology
+Who developed the theory of general relativity?,Albert Einstein,trivia;science
+What is the square root of 144?,12,trivia;math
+"What is the speed of light in a vacuum, in kilometres per second (approximately)?","About 299,792 kilometres per second",trivia;physics
+Which element has the atomic number 1?,Hydrogen,trivia;science
+What is the longest river in South America?,The Amazon River,trivia;geography
+How many sides does a hexagon have?,6,trivia;math
+Who painted the Mona Lisa?,Leonardo da Vinci,trivia;art

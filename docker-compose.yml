@@ -1,0 +1,72 @@
+# LLM Eval Platform - full stack.
+#   docker compose up -d --build            # postgres + api + dashboard (mock providers)
+#   Langfuse export: set LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST (see README)
+# Host ports are configurable: API_PORT, WEB_PORT, POSTGRES_PORT.
+
+name: llm-eval-platform
+
+x-api-env: &api-env
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eval}:${POSTGRES_PASSWORD:-eval}@postgres:5432/${POSTGRES_DB:-evalplatform}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_FORMAT: json
+  DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-mock}
+  JUDGE_PROVIDER: ${JUDGE_PROVIDER:-mock}
+  JUDGE_MODEL: ${JUDGE_MODEL:-mock-judge}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+  OTEL_EXPORTER: ${OTEL_EXPORTER:-none}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+  LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+  SEED_ON_START: ${SEED_ON_START:-true}
+  SEED_TRAFFIC: ${SEED_TRAFFIC:-160}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eval}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eval}
+      POSTGRES_DB: ${POSTGRES_DB:-evalplatform}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eval} -d ${POSTGRES_DB:-evalplatform}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llm-eval-platform-api:latest
+    restart: unless-stopped
+    environment: *api-env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: llm-eval-platform-web:latest
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+
+volumes:
+  pgdata:

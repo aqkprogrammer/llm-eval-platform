@@ -1,0 +1,57 @@
+# Example: gate pull requests on LLM quality. Runs the evaluation suite and fails the check when
+# thresholds are not met or metrics regress against the baseline report from `main`.
+name: LLM quality gate
+
+on:
+  pull_request:
+    paths: ["prompts/**", "examples/**", "data/**", "src/**"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      # Mock providers keep this example free and deterministic. For real models add secrets and
+      # switch the models in the config, e.g. provider: anthropic / model: claude-sonnet-5.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      MOCK_LATENCY_SCALE: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+
+      - name: Download baseline report from main
+        if: github.event_name == 'pull_request'
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: eval-gate.yml
+          branch: main
+          name: eval-report
+          path: baseline
+
+      - name: Run evaluation suite
+        run: |
+          BASELINE_ARGS=""
+          if [ -f baseline/eval-report.json ]; then
+            BASELINE_ARGS="--baseline baseline/eval-report.json --max-regression 0.03"
+          fi
+          uv run evalctl run examples/eval-config.yaml \
+            --ephemeral \
+            --fail-under correctness=0.75 \
+            --fail-under faithfulness=0.85 \
+            --fail-over latency_ms=2500 \
+            --output eval-report.json \
+            $BASELINE_ARGS
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval-report.json
