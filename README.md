@@ -9,7 +9,7 @@
 ![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-traces-425CC7?logo=opentelemetry&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-![Overview dashboard with experiments, system status and 24h production metrics](docs/screenshots/overview.png)
+![Tour: the overview dashboard, an experiment, a side-by-side model comparison and a production trace](docs/screenshots/tour.webp)
 
 > Runs completely offline out of the box. A deterministic mock provider simulates three models with different quality, speed, cost and safety profiles, and a mock judge stands in for the LLM judge, so the dashboards, the tests and the CI gate all work without API keys. To evaluate real models, add an Anthropic or OpenAI key or point it at a local Ollama server.
 
